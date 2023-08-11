@@ -1,0 +1,4 @@
+docker-wait-for-it
+mysql
+node/node_modules
+node/.DS_Store
