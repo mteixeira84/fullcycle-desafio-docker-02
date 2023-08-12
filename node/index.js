@@ -1,6 +1,6 @@
 const express = require("express");
-
-//const axios = require("axios").default;
+const axios = require("axios").default;
+const mysql = require("mysql");
 
 const app = express();
 
@@ -13,11 +13,46 @@ const config = {
   database: "nodedb",
 };
 
-const mysql = require("mysql");
+app.get("/", (req, res) => {
+  insertTable(res);
+});
 
-async function readTable(res) {
-  const connection = mysql.createConnection(config);
+app.listen(port, () => {
+  console.log("Rodando na porta: " + port);
+});
 
+async function randomName(req, res) {
+  const names = [
+    "Alexandra",
+    "Abraão",
+    "Salomão",
+    "Yohanna",
+    "Catarina",
+    "Dilan",
+    "Kyle",
+    "Mustafa",
+    "Messias",
+  ];
+
+  const response = await axios.get("https://gerador-nomes.wolan.net/nomes/1");
+
+  if (response.data[0] !== undefined) {
+    return response.data[0];
+  } else {
+    return names[Math.floor(Math.random() * names.length)];
+  }
+}
+
+async function insertTable(res) {
+  const name = await randomName();
+  const connection = await mysql.createConnection(config);
+  const sql = `INSERT INTO people(name) values('${name}')`;
+
+  connection.query(sql);
+  readTable(res, connection);
+}
+
+function readTable(res, connection) {
   const sql = `SELECT id, name FROM people`;
 
   connection.query(sql, (error, results) => {
@@ -36,45 +71,3 @@ async function readTable(res) {
   });
   connection.end();
 }
-
-function randomName() {
-  const names = [
-    "Matheus",
-    "Thais",
-    "Maria",
-    "Jose",
-    "Gabriel",
-    "Joao",
-    "Lucia",
-    "Ivan",
-    "Victor",
-  ];
-  return names[Math.floor(Math.random() * names.length)];
-}
-
-async function randomNameV2() {
-  const RANDOM = Math.floor(Math.random() * 10);
-  const response = await axios.get("https://swapi.dev/api/people");
-  personName = response.data.results;
-  return personName[RANDOM].name;
-}
-
-async function insertTable(res) {
-  const name = await randomName();
-  const connection = await mysql.createConnection(config);
-
-  const sql = `INSERT INTO people(name) values('${name}')`;
-  //const sql = `INSERT INTO people(name) values('Matheus')`;
-  connection.query(sql);
-  connection.end();
-
-  readTable(res);
-}
-
-app.get("/", (req, res) => {
-  insertTable(res);
-});
-
-app.listen(port, () => {
-  console.log("Rodando na porta: " + port);
-});
